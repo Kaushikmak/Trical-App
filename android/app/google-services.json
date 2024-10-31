@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "703189082194",
+    "project_id": "trical-app",
+    "storage_bucket": "trical-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:703189082194:android:08ef60560842c0417f7f8b",
+        "android_client_info": {
+          "package_name": "com.example.trical"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYXkQTY6v5lM4LXFOvKqpeK4a-a75DpU0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
