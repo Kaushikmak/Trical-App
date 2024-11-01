@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
 class NewsDetailPage extends StatelessWidget {
   final Map<String, dynamic> newsData;
@@ -7,22 +8,24 @@ class NewsDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Extracting information from the news data
     final String title = newsData['title'] ?? 'No Title';
     final String body = newsData['body'] ?? 'No Description';
-    final List<String> images = List<String>.from(newsData['images'] ?? []);
-    final List<String> videos = List<String>.from(newsData['videos'] ?? []);
+    final List<String> images =
+    List<String>.from(newsData['images'] ?? []);
+
+    final List<String> titleWords = title.split(' ');
+    final String appBarTitle = titleWords.take(2).join(' ');
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Text(appBarTitle),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
               child: Text(
@@ -33,59 +36,91 @@ class NewsDetailPage extends StatelessWidget {
                 ),
               ),
             ),
-            // Body
             Text(
               body,
               style: const TextStyle(fontSize: 16),
             ),
-            // Images
             if (images.isNotEmpty)
               Column(
                 children: [
                   const SizedBox(height: 16),
-                  const Text(
-                    "Images",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ...images.map((url) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        url,
-                        fit: BoxFit.cover,
+                  if (images.length > 1)
+                    CarouselSlider.builder(
+                      itemCount: images.length,
+                      itemBuilder:
+                          (BuildContext context, int index, int realIndex) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              images[index],
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              loadingBuilder: (BuildContext context,
+                                  Widget child,
+                                  ImageChunkEvent? loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                        ? loadingProgress
+                                        .cumulativeBytesLoaded /
+                                        (loadingProgress
+                                            .expectedTotalBytes ?? 1)
+                                        : null,
+                                  ),
+                                );
+                              },
+                              errorBuilder: (BuildContext context, Object error,
+                                  StackTrace? stackTrace) {
+                                return const Center(
+                                    child: Text('Failed to load image'));
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      options: CarouselOptions(
+                        autoPlay: true,
+                        enlargeCenterPage: true,
+                        viewportFraction: 0.8,
+                        aspectRatio: 2.0,
+                        initialPage: 0,
                       ),
-                    ),
-                  )),
-                ],
-              ),
-            // Videos
-            if (videos.isNotEmpty)
-              Column(
-                children: [
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Videos",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ...videos.map((url) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Container(
-                      height: 200, // Set a fixed height for video
-                      decoration: BoxDecoration(
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        color: Colors.black,
-                      ),
-                      child: Center(
-                        child: Text(
-                          "Video: ${url.split('/').last}", // Show the video filename
-                          style: const TextStyle(color: Colors.white),
+                        child: Image.network(
+                          images.first,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          loadingBuilder: (BuildContext context, Widget child,
+                              ImageChunkEvent? loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes !=
+                                    null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                    (loadingProgress.expectedTotalBytes ??
+                                        1)
+                                    : null,
+                              ),
+                            );
+                          },
+                          errorBuilder: (BuildContext context, Object error,
+                              StackTrace? stackTrace) {
+                            return const Center(
+                                child: Text('Failed to load image'));
+                          },
                         ),
                       ),
                     ),
-                  )),
                 ],
               ),
           ],

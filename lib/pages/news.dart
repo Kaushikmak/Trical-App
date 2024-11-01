@@ -34,17 +34,46 @@ class NewsPage extends StatefulWidget {
 class _NewsPageState extends State<NewsPage> {
   Future<List<Map<String, dynamic>>> fetchNewsItems() async {
     try {
-      final storageRef = FirebaseStorage.instance.ref('news');
+      final storageRef = FirebaseStorage.instance.ref('News');
       ListResult result = await storageRef.listAll();
 
       List<Map<String, dynamic>> newsItems = [];
       for (var folderRef in result.prefixes) {
-        // Assuming the JSON file is named "info.json"
-        String metadataUrl = await folderRef.child('info.json').getDownloadURL();
-        final response = await NetworkAssetBundle(Uri.parse(metadataUrl)).load("");
-        final jsonData = json.decode(utf8.decode(response.buffer.asUint8List()));
+        try {
+          ListResult folderContents = await folderRef.listAll();
 
-        newsItems.add(jsonData);
+          // Initialize lists to hold image and video URLs
+          List<String> images = [];
+          List<String> videos = [];
+
+          Map<String, dynamic>? jsonData;
+
+          for (var item in folderContents.items) {
+            if (item.name.endsWith('.json') && jsonData == null) {
+              String metadataUrl = await item.getDownloadURL();
+              final response = await NetworkAssetBundle(Uri.parse(metadataUrl)).load("");
+              jsonData = json.decode(utf8.decode(response.buffer.asUint8List()));
+            } else if (item.name.endsWith('.jpg') || item.name.endsWith('.jpeg') || item.name.endsWith('.png')) {
+              images.add(await item.getDownloadURL());
+            } else if (item.name.endsWith('.mp4')) {
+              videos.add(await item.getDownloadURL());
+            }
+          }
+
+          if (jsonData == null) {
+            print("No JSON metadata file found in folder ${folderRef.name}");
+            continue; // Skip folders without a JSON file
+          }
+
+          // Add images and videos to the JSON data
+          jsonData['images'] = images;
+          jsonData['videos'] = videos;
+          jsonData['folderName'] = folderRef.name; // Optional: folder name for UI
+
+          newsItems.add(jsonData);
+        } catch (e) {
+          print("Error loading data for folder ${folderRef.name}: $e");
+        }
       }
 
       return newsItems;
@@ -58,7 +87,7 @@ class _NewsPageState extends State<NewsPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => NewsDetailPage(newsData: newsData), // You need to create this page
+        builder: (context) => NewsDetailPage(newsData: newsData),
       ),
     );
   }
@@ -76,16 +105,16 @@ class _NewsPageState extends State<NewsPage> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: const Text("No news available"));
+            return const Center(child: Text("No news available"));
           } else {
             final newsItems = snapshot.data!;
             return GridView.builder(
               padding: const EdgeInsets.all(8),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+                crossAxisCount: 1,
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
-                childAspectRatio: 1, // Ensures square cards
+                childAspectRatio: 2,
               ),
               itemCount: newsItems.length,
               itemBuilder: (context, index) {
@@ -99,7 +128,7 @@ class _NewsPageState extends State<NewsPage> {
                       children: [
                         Text(
                           newsData['title'] ?? 'No Title',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
@@ -109,7 +138,7 @@ class _NewsPageState extends State<NewsPage> {
                             newsData['body'] ?? 'No Description',
                             style: const TextStyle(fontSize: 14),
                             textAlign: TextAlign.center,
-                            maxLines: 3,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -125,4 +154,3 @@ class _NewsPageState extends State<NewsPage> {
     );
   }
 }
-
