@@ -68,6 +68,20 @@ class Tricaldrawer extends StatelessWidget {
               }
             },
           ),
+          Spacer(),
+          ListTile(
+            leading: const Icon(
+              Icons.settings,
+              color: Colors.deepPurpleAccent,
+            ),
+            title: const Text("Setting"),
+            onTap: () {
+              Navigator.pop(context);
+              if (currentPage != "settings") {
+                Navigator.pushNamed(context, '/settings');
+              }
+            },
+          ),
         ],
       ),
     );
