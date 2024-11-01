@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 
 class FirebaseApi {
   final _firebaseMessaging = FirebaseMessaging.instance;
@@ -12,15 +13,10 @@ class FirebaseApi {
         badge: true,
         sound: true,
       );
-
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        // Get the token - add await here
-        final fcmToken = await _firebaseMessaging.getToken();
-      } else {
-        print("Notification permission denied");
-      }
     } catch (e) {
-      print("Error getting FCM token: $e");
+      if (kDebugMode) {
+        print("Error getting FCM token: $e");
+      }
     }
   }
 }

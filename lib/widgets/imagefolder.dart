@@ -1,23 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
-class FolderImagesPage extends StatelessWidget {
-  final String folderName;
 
+class FolderImagesPage extends StatefulWidget {
+  final String folderName;
   const FolderImagesPage({Key? key, required this.folderName})
       : super(key: key);
 
-  Future<List<String>> fetchImageUrls() async {
+  @override
+  State<FolderImagesPage> createState() => _FolderImagesPageState();
+}
+
+class _FolderImagesPageState extends State<FolderImagesPage> {
+  final List<String> _urls = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchImages();
+  }
+
+  Future<void> _fetchImages() async {
     try {
-      ListResult result =
-          await FirebaseStorage.instance.ref('Images/$folderName/').listAll();
-      List<String> urls = await Future.wait(
-          result.items.map((ref) async => await ref.getDownloadURL()).toList());
-      print("Fetched URLs for $folderName: $urls"); // Debugging
-      return urls;
+      final result = await FirebaseStorage.instance
+          .ref('Images/${widget.folderName}/')
+          .list(
+              const ListOptions(maxResults: 50)); // Limit to 50 images at once
+
+      if (!mounted) return;
+
+      final futures = result.items.map((ref) => ref.getDownloadURL());
+      final urls = await Future.wait(futures);
+
+      setState(() {
+        _urls.addAll(urls);
+        _isLoading = false;
+      });
     } catch (e) {
-      print("Error fetching images for $folderName: $e");
-      return []; // Return an empty list on error
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      debugPrint('Error: $e');
     }
   }
 
@@ -25,51 +48,105 @@ class FolderImagesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(folderName.toUpperCase()),
+        title: Text(widget.folderName.toUpperCase()),
         centerTitle: true,
       ),
-      body: FutureBuilder<List<String>>(
-        future: fetchImageUrls(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError || !snapshot.hasData) {
-            print(
-                "Error or no data in FutureBuilder (images): ${snapshot.error}");
-            return Center(child: const Text("Error loading images"));
-          } else {
-            final urls = snapshot.data ?? [];
-            return GridView.builder(
-              padding: const EdgeInsets.all(8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-              ),
-              itemCount: urls.length,
-              itemBuilder: (context, index) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    urls[index],
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const Center(child: CircularProgressIndicator());
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(Icons.error_outline, color: Colors.red),
-
-                      );
-                    },
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _urls.isEmpty
+              ? const Center(child: Text('No images found'))
+              : GridView.builder(
+                  padding: const EdgeInsets.all(8),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
                   ),
-                );
-              },
-            );
-          }
+                  itemCount: _urls.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () => _showImage(context, index),
+                      child: Image.network(
+                        _urls[index],
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.error, color: Colors.red),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+    );
+  }
+
+  void _showImage(BuildContext context, int index) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageViewPage(
+          urls: _urls,
+          initialIndex: index,
+        ),
+      ),
+    );
+  }
+}
+
+class ImageViewPage extends StatelessWidget {
+  final List<String> urls;
+  final int initialIndex;
+
+  const ImageViewPage({
+    Key? key,
+    required this.urls,
+    required this.initialIndex,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(onPressed: (){}, icon:const Icon(Icons.share,color: Colors.white,))
+        ],
+      ),
+      extendBodyBehindAppBar: true,
+      body: PageView.builder(
+        controller: PageController(initialPage: initialIndex),
+        itemCount: urls.length,
+        itemBuilder: (context, index) {
+          return InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 3.0,
+            child: Center(
+              child: Image.network(
+                urls[index],
+                fit: BoxFit.contain,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  );
+                },
+              ),
+            ),
+          );
         },
       ),
     );
