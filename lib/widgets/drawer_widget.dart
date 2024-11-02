@@ -68,7 +68,7 @@ class Tricaldrawer extends StatelessWidget {
               }
             },
           ),
-          Spacer(),
+          const Spacer(),
           ListTile(
             leading: const Icon(
               Icons.info_outline,

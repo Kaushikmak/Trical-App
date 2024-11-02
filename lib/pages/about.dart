@@ -139,6 +139,7 @@ class WebViewPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Web View"),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.close),
