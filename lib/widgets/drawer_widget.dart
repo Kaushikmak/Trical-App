@@ -71,14 +71,14 @@ class Tricaldrawer extends StatelessWidget {
           Spacer(),
           ListTile(
             leading: const Icon(
-              Icons.settings,
+              Icons.info_outline,
               color: Colors.deepPurpleAccent,
             ),
-            title: const Text("Setting"),
+            title: const Text("About App"),
             onTap: () {
               Navigator.pop(context);
-              if (currentPage != "settings") {
-                Navigator.pushNamed(context, '/settings');
+              if (currentPage != "about") {
+                Navigator.pushNamed(context, '/about');
               }
             },
           ),

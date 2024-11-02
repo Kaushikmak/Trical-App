@@ -5,13 +5,15 @@ import 'pages/gallery.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:trical/api/firebase_api.dart';
 import 'package:trical/pages/timetable.dart';
-import 'package:trical/pages/settings.dart';
+import 'package:trical/pages/about.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp();
     await FirebaseApi().initializeNotifications();
+    WidgetsFlutterBinding.ensureInitialized();
   } catch (e) {}
   runApp(const MyApp());
 }
@@ -23,13 +25,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const HomePage(),
+      home:const HomePage(),
       routes: {
         '/gallery': (context) => const GalleryPage(),
         '/news': (context) => const NewsPage(),
         '/home': (context) => const HomePage(),
         '/timetable'  : (context) =>  const Timetable(),
-        '/settings'  : (context) =>  const Settings(),
+        '/about'  : (context) =>  const About(),
       },
     );
   }
