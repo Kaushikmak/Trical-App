@@ -10,9 +10,10 @@ import 'package:trical/pages/about.dart';
 
 Future<void> main() async {
   try {
+    WidgetsFlutterBinding.ensureInitialized();
     await Firebase.initializeApp();
     await FirebaseApi().initializeNotifications();
-    WidgetsFlutterBinding.ensureInitialized();
+
   } catch (e) {}
   runApp(const MyApp());
 }
