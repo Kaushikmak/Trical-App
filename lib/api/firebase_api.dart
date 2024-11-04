@@ -1,5 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
+
 
 class FirebaseApi {
   final _firebaseMessaging = FirebaseMessaging.instance;
@@ -14,9 +14,7 @@ class FirebaseApi {
         sound: true,
       );
     } catch (e) {
-      if (kDebugMode) {
-        print("Error getting FCM token: $e");
       }
     }
   }
-}
+
